@@ -20,6 +20,9 @@
     "url": "git+https://github.com/eswr/react-native-insta-story.git",
     "baseUrl": "https://github.com/eswr/react-native-insta-story"
   },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "keywords": [
     "react-native",
     "insta-story",
