@@ -11,3 +11,8 @@ export interface IUserStoryItem {
     onPress?: any,
     swipeText?: string,
 }
+
+export interface IPageToUserId {
+    user_id: number,
+    story_id: number,
+}

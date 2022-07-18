@@ -31,6 +31,8 @@ type Props = {
     customCloseComponent?: any,
     stories: IUserStoryItem[]
 };
+const inRange = (pageIndex, content) => pageIndex > 0 && pageIndex <= content.length
+
 
 export const StoryListItem = (props: Props) => {
     const stories = props.stories;
@@ -52,23 +54,26 @@ export const StoryListItem = (props: Props) => {
     const progress = useRef(new Animated.Value(0)).current;
 
     const prevCurrentPage = usePrevious(props.currentPage);
-
     useEffect(() => {
         let isPrevious = prevCurrentPage > props.currentPage;
-        if (isPrevious) {
+        console.log(current, content, content[current], 'blah 1')
+
+        if (isPrevious) {    
             setCurrent(content.length - 1);
         } else {
-            setCurrent(0);
+            setCurrent(props.gotoPage && inRange(props.gotoPage, content)  ? props.gotoPage : 0);
         }
 
         let data = [...content];
         data.map((x, i) => {
             if (isPrevious) {
+                // console.log('data isPrevious')
                 x.finish = 1;
                 if (i == content.length - 1) {
                     x.finish = 0;
                 }
             } else {
+                // console.log('data !isPrevious')
                 x.finish = 0;
             }
 

@@ -4,7 +4,7 @@ import Modal from "react-native-modalbox";
 import StoryListItem from "./StoryListItem";
 import StoryCircleListView from "./StoryCircleListView";
 import {isNullOrWhitespace} from "./helpers/ValidationHelpers";
-import type {IUserStory} from "./interfaces/IUserStory";
+import type {IUserStory , IPageToUserId} from "./interfaces/IUserStory";
 import AndroidCubeEffect from "./components/AndroidCubeEffect";
 import CubeNavigationHorizontal from "./components/CubeNavigationHorizontal";
 import {TextStyle} from "react-native";
@@ -22,8 +22,34 @@ type Props = {
     customCloseComponent?: any,
     avatarSize?: number,
     showAvatarText?: boolean,
-    avatarTextStyle?: TextStyle
+    avatarTextStyle?: TextStyle,
+    setOpenPageToUserId?: IPageToUserId,
 };
+const getUserByUserId = (user_id,data) => data.find(u=>u.user_id == user_id)
+const getUserIndexByUserId = (user_id,data) => data.findIndex(u=>u.user_id == user_id)
+const getPageIndexByUserId = (story_id, stories) => stories.findIndex(u=>u.story_id === story_id)
+const isValidPageToUserId = ({user_id, story_id}, data) => {
+    const user = getUserByUserId(user_id, data)
+    if (!user) {
+        return false
+    }
+    const story = user.stories.find(u=>u.story_id === story_id)
+    if (!story) {
+        return false
+    }
+    return true
+}
+
+const defaultCurrentPage = 0
+const getPageIndexFromSetOpen = ({user_id, story_id}, data) => {
+    try {
+        const user = getUserByUserId(user_id, data)
+        return getPageIndexByUserId(story_id, user.stories)    
+    } catch (e) {
+
+    }
+    return defaultCurrentPage
+}
 
 export const Story = (props: Props) => {
     const {
@@ -39,12 +65,13 @@ export const Story = (props: Props) => {
         customCloseComponent,
         avatarSize,
         showAvatarText,
-        avatarTextStyle
+        avatarTextStyle,
+        setOpenPageToUserId,
     } = props;
 
     const [dataState, setDataState] = useState(data);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [currentPage, setCurrentPage] = useState(0);
+    const [currentPage, setCurrentPage] = useState(defaultCurrentPage);
     const [selectedData, setSelectedData] = useState([]);
     const cube = useRef();
 
@@ -54,11 +81,31 @@ export const Story = (props: Props) => {
         if (onStart) {
             onStart(item)
         }
-
         setCurrentPage(0);
         setSelectedData(newData);
         setIsModalOpen(true);
     };
+    const handleGoToUsersStory = (userIndex, pageIndex) => {
+        const newData = dataState.slice(userIndex);
+        setSelectedData(newData);
+        setCurrentPage(pageIndex);
+        // let tempData = newData;
+        // dataState[pageIndex] = {
+        //     ...dataState[pageIndex],
+        //     seen: true
+        // }
+        // setDataState(tempData);
+        setIsModalOpen(true);
+    };
+
+    useEffect(() => {
+        if (setOpenPageToUserId && isValidPageToUserId(setOpenPageToUserId, data)) {
+            const userIndex = getUserIndexByUserId(setOpenPageToUserId.user_id, data)
+            const pageIndex = getPageIndexFromSetOpen(setOpenPageToUserId, data)
+            handleGoToUsersStory(userIndex, pageIndex)
+        }
+        
+    }, [setOpenPageToUserId]);
 
     useEffect(() => {
         handleSeen();
@@ -112,6 +159,7 @@ export const Story = (props: Props) => {
                                profileName={x.user_name}
                                profileImage={x.user_image}
                                stories={x.stories}
+                               gotoPage={x.user_id === setOpenPageToUserId.user_id && getPageIndexFromSetOpen(setOpenPageToUserId, data)}
                                currentPage={currentPage}
                                onFinish={onStoryFinish}
                                swipeText={swipeText}
